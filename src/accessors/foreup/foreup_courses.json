@@ -1,0 +1,16 @@
+{
+    "richterpark": {
+        "name": "Richter Park",
+        "town": "Fairfield",
+        "course_id": 22023,
+        "booking_classes": [13254],
+        "schedule_id": 0
+    },
+    "vineyardvalley": {
+        "name": "Vineyard Valley",
+        "town": "Pomfret Center",
+        "course_id": 19108,
+        "booking_classes": [48839],
+        "schedule_id": 965
+    }
+}
