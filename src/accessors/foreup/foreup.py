@@ -31,9 +31,7 @@ class ForeupClient:
             "auth_token":       None            
         }
 
-        self._tee_times = {
-            "date":             None            # datetime.datetime
-        }
+        self._tee_times = {}
 
         self._reservation_details = {
             "reservation_id":   None,           # str
@@ -134,7 +132,7 @@ class ForeupClient:
                 date_str, time_str = splice[0], splice[1]
                 timesheet[time_str] = booking_detail
 
-            self._tee_times[date_str] = timesheet
+            self.update_tee_times(times=timesheet)
         except requests.exceptions.ConnectionError:
             print(f"Failed to get Tee Times. date={date}. booking_class={booking_class}. schedule_id={schedule_id}")
         except Exception as e:
@@ -150,35 +148,38 @@ class ForeupClient:
             self.update_reservation_details(time=time_str)
 
             endpoint = "https://foreupsoftware.com/index.php/api/booking/pending_reservation"
-            breakpoint()
-            teetime = self.tee_times.get(self.auth_details.get("date").strftime("%Y-%m-%d")).get(time)
-            breakpoint()
-            # do error handling
+
+            teetime = self.tee_times["times"].get(time)
+
             data={
-                "time": date+"+"+time,
-                "holes": teetime.get("holes"),
-                "players": teetime.get("maximum_players_per_booking"),
-                "carts": True, # not sure where to get this
-                "schedule_id": self.course_details.get("schedule_id"),
-                "teesheet_side_id": teetime.get("teesheet_side_id"),
-                "course_id": self.course_details.get("course_id"),
-                "booking_class_id": self.course_details.get("booking_class"),
-                "duration": 1,  # default
-                "foreup_discount": teetime.get("foreup_discount"),
+                "time":                 date+"+"+time,
+                "holes":                teetime.get("holes"),
+                "players":              teetime.get("maximum_players_per_booking"),
+                "carts":                False,      # TODO
+                "schedule_id":          self.course_details.get("schedule_id"),
+                "teesheet_side_id":     teetime.get("teesheet_side_id"),
+                "course_id":            self.course_details.get("course_id"),
+                "booking_class_id":     self.course_details.get("booking_class"),
+                "duration":             1,          # TODO
+                "foreup_discount":      teetime.get("foreup_discount"),
                 "foreup_trade_discount_rate": teetime.get("foreup_trade_discount_rate"),
-                "trade_min_players": teetime.get("trade_min_players"),
-                "cart_fee": teetime.get("cart_fee"),
-                "cart_fee_tax": teetime.get("cart_fee_tax"),
-                "green_fee": teetime.get("green_fee"),
-                "green_fee_tax": teetime.get("green_fee_tax")
+                "trade_min_players":    teetime.get("trade_min_players"),
+                "cart_fee":             teetime.get("cart_fee"),
+                "cart_fee_tax":         teetime.get("cart_fee_tax"),
+                "green_fee":            teetime.get("green_fee"),
+                "green_fee_tax":        teetime.get("green_fee_tax")
             }
 
             header = {
                 **FOREUP_HEADER,
                 "X-Authorization": f"Bearer {self.auth_details.get('auth_token')}",
-                "X-Fu-Golfer-Location": "foreup"
+                "X-Fu-Golfer-Location": "foreup",
+                "Referer": f"https://foreupsoftware.com/index.php/booking/{self.course_details.get('course_id')}/{self.course_details.get('schedule_id')}"
             }
+
             response = self.session.post(endpoint,headers=header,data=data)
+
+            breakpoint()
             return response
         except requests.exceptions.ConnectionError:
             print("Failed to connect to the website.")
